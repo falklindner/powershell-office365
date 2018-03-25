@@ -46,13 +46,39 @@ Function AddDGMemebers ($Comparison,$DGName)  {
 
 
 
+Function CheckIDG ($IDG,$AG) {
+    if (!(Get-DistributionGroup | Where-Object {$_.Name -eq "Verteiler $IDG für AG $AG"}))
+    {
+        WriteToCMD -Text "New-DistributionGroup -Name Mitglieder AG $AG -Type Security -DisplayName Mitglieder AG $AG -ManagedBy $User -PrimarySmtpAddress mitglieder_$ag@fhh-portal.de" 
+       # New-DistributionGroup -Name "Mitglieder AG $ag" -Type Security -DisplayName "Mitglieder AG $ag" -ManagedBy $User -PrimarySmtpAddress "mitglieder_$ag@fhh-portal.de"
+    }
+}
+
+Function DeleteIDGMembers ($Comparison,$DGName) {
+    $ToRemove = @($Comparison | Where-Object  {$_.SideIndicator -eq "<="})
+    ForEach ($Contact in  $ToRemove) {        
+       # Remove-DistributionGroupMember -Identity "Mitglieder AG $DGName" -Member $Contact.PrimarySMTPAddress -Confirm:$false
+        WriteToCMD -Text "Remove DistributionGroupMember -Identity Mitglieder AG $DGName -Member $($Contact.PrimarySMTPAddress) -Confirm:$false"
+        WriteToLog -Text "Removed from individual DG: $($Contact.PrimarySMTPAddress)"
+    }
+}
+
+Function AddIDGMemebers ($Comparison,$DGName)  {
+    $ToAdd = @($Comparison| Where-Object  {$_.SideIndicator -eq "=>"})
+    ForEach ($Contact in  $ToAdd) {
+       # Add-DistributionGroupMember -Identity "Mitglieder AG $DGName" -Member $Contact.PrimarySMTPAddress
+       WriteToCMD -Text "Add-DistributionGroupMember -Identity Mitglieder AG $DGName -Member $($Contact.PrimarySMTPAddress)"
+       WriteToLog -Text "Added to generic DG: $($Contact.PrimarySMTPAddress)"
+    }
+}
+
+
 Function ManageDistribtionGroups ($LAL,$ExcelList) {
     ForEach ($file in $ExcelList){
         $FilePath = $file.FullName
         $AGName = $file.BaseName
-        $IDGList = $(Import-Excel -Path $FilePath -NoHeader | Select-Object -First 1 | Get-Member | Where-Object {$_.Definition -like "*V:*"}).Definition
         WriteToLog -Text "###########################################################################################"
-        WriteToLog -Text "########################################################  $AGName"
+        WriteToLog -Text "########################################################  $AGName ($($IDGList.Count) IDGs)"
         WriteToLog -Text "###########################################################################################"
         
         CheckDG -ag $AGName
@@ -67,12 +93,20 @@ Function ManageDistribtionGroups ($LAL,$ExcelList) {
         DeleteDGMembers -Comparison $Comp -DGName $AGName
         AddDGMemebers -Comparison $Comp -DGName $AGName
         
-        
         ForEach ($element in $IDGList) {
+            If( $element -eq $null ) {Break}
             $idg = $element.Split(":")[1]
-           # CheckIDG -Name $idg
-           # DeleteIDGMembers
-           # AddIDGMembers 
+            $columnname = "V:$($idg)"
+            WriteToLog -Text "###########################################################################################"
+            WriteToLog -Text "########################################################  IDG $idg of $AGName"
+            WriteToLog -Text "###########################################################################################"
+            CheckIDG -IDG $idg -AG $AGName
+
+            $LocalIDGList = $LAL | Where-Object { ($_.AG -cmatch "$AGName") -and ($_.($columnname) -eq "ü") } | Select-Object @{Name="PrimarySMTPAddress";Expression={$_.Mail}} 
+            WriteToLog -Text "Found $($LocalIDGList.Count) IDG Members in XLSX"
+            $RemoteIDGList = @(Get-DistributionGroupMember -ResultSize Unlimited -Identity "Verteiler $idg für AG $AGName" | Select-Object PrimarySMTPAddress)
+            WriteToLog -Text "Found $($RemoteIDGList.Count) IDG Members in XLSX"
+            $Comp = @(Compare-Object -ReferenceObject $RemoteIDGList -DifferenceObject $LocalIDGList -Property PrimarySMTPAddress -PassThru)
         }
     }
 }

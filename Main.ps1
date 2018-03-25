@@ -9,6 +9,7 @@ Class Person
  [String]$Nachname
  [String]$Mail
  [String]$AG
+ [String]$IndividualDG
 }
 
 
