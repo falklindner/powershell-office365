@@ -59,7 +59,7 @@ Function ExcelToLAL ($ExcelFile, $AddressList){
 Function AddIDGToHeader ($Header,$ExcelFile) {
         
     #Importing the individual distribution group tags from Excel Files. 
-    #Column Header is asssumed to Start with V:, Tag is a "ü" (chechmark in Windings)
+    #Column Header is asssumed to Start with V:, Tag is a "Ã¼" (chechmark in Windings)
 
     #Typical Output of Import-Excel -Path $ExcelFile.FullName -NoHeader | Get-Member | Select-Object Definition
     #     
@@ -79,7 +79,7 @@ Function AddIDGToHeader ($Header,$ExcelFile) {
     If ($IDGList -eq "") { $IDGList = $null }
     $Header_add = @{}
     ForEach ($idgtag in $IDGList) {
-        $columnname = V:$idgtag
+        $expr = 
         $Header_add.Add( @{Label="$($ExcelFile.BaseName)-$idgtag"; Expression = {$_."$columnname"}})
     }
     $Header += $Header_add
