@@ -1,15 +1,16 @@
-Function LoginFHH_Exchange ($cred) 
+Function New-LoginFHH ($cred) 
 {
     if (!(Get-PSSession | Where-Object { $_.ConfigurationName -eq "Microsoft.Exchange" -and $_.State -eq "Opened" })) {
     $exchangeSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri "https://outlook.office365.com/powershell-liveid/" -Credential $cred -Authentication "Basic" -AllowRedirection
-    Import-PSSession $exchangeSession -DisableNameChecking
+    Import-PSSession -Session $exchangeSession -DisableNameChecking 
     if (!(Get-PSSession | Where-Object { $_.ConfigurationName -eq "Microsoft.Exchange" })) {
         Throw "Connection unsuccessful"
         }   
     }
+    return $exchangeSession
 }
 
-Function CloseFHH 
+Function Close-FHH 
 {
     foreach ($exchangesession in $(Get-PSSession | Where-Object {$_.ConfigurationName -eq "Microsoft.Exchange" }))
     {   
@@ -28,7 +29,7 @@ Function ContactToPerson ($Contact) {
 }
 
 Function BuildGAL {
-    $ContactList = Get-Contact -ResultSize Unlimited| Select-Object LastName,FirstName,WindowsEmailAddress
+    $ContactList = Get-Contact -ResultSize Unlimited | Select-Object LastName,FirstName,WindowsEmailAddress
     $GlobalAddressList = New-Object System.Collections.Generic.List[Person] 
     # Importing the Contacts from Office 365 Server into a list of instances of type person
     foreach ($Contact in $ContactList) {

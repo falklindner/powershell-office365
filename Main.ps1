@@ -17,6 +17,17 @@ $ExcelPath = "$(Get-Item $PSScriptRoot)\work"
 $LOG = "$ExcelPath\Log\Log.txt"
 $TestCMDs = "$ExcelPath\Log\CMDs.txt"
 
+Function Test-Modules {
+    $missing = ""
+    $modules = @("ImportExcel","SharePointPnPPowerShellOnline")
+    ForEach ($mod in $modules) {
+        If (-Not (Get-Module -ListAvailable -Name $mod)) {
+        $missing += "$mod,"
+        }
+    }
+    return $missing    
+}
+
 Function WriteToLog ($Text) {
     Out-File -FilePath $LOG -Append -Encoding utf8 -InputObject "$Text"
 }
@@ -24,11 +35,21 @@ Function WriteToCMD ($Text) {
     Out-File -FilePath $TestCMDs -Append -Encoding utf8 -InputObject "$Text"
 }
 
-# Main routine
-$startDTM = (Get-Date)
 
-LoginFHH_Exchange($UserCredential)
-Connect-PnPOnline -Url $SPOnline -Credentials ($UserCredential)
+
+################################################ Main routine
+$startDTM = (Get-Date)
+If ( $(Test-Modules) -ne "" ) {
+    WriteToLog -Text "###########################################################################################"
+    WriteToLog -Text "###########################################################  Missing Modules: $(TestModules)"
+    WriteToLog -Text "###########################################################################################"
+    Exit
+}
+
+##
+
+
+
 
 If (Test-Path $ExcelPath) {Remove-Item $ExcelPath -Force -Recurse}
 New-Item -ItemType Directory -Path $ExcelPath -Force
@@ -36,22 +57,28 @@ New-Item -ItemType Directory -Path $ExcelPath -Force
 New-Item -ItemType File -Path $LOG -Force
 WriteToLog -Text "###########################################################################################"
 WriteToLog -Text "###########################################################  Generating Local Address List "
-WriteToLog -Text "###########################################################################################"
+WriteToLog -Text "###########################################################################################"  
 
-
+Connect-PnPOnline -Url $SPOnline -Credentials ($UserCredential)
 ForEach ($file in  $(Get-PnPFolderItem -FolderSiteRelativeUrl "Dokumentbibliothek" -ItemType File)) {
     Get-PnPFile -Url /Dokumentbibliothek/$($file.Name) -AsFile -Force -Path $ExcelPath -Filename $file.Name
 }
 
 $ExcelList = Get-ChildItem -Path $ExcelPath -File  | Where-Object {($_.Extension -eq ".xlsx") -and ($_.Name -notlike "*~*")}
 WriteToLog -Text "Found $($ExcelList.Count) Excel Files"
-$LocalAddressList = BuildLAL -ExcelList $ExcelList 
+
+
+$GlobalIDGList = @()
+$GlobalIDGList = Get-GlobalIDGs -ExcelList $ExcelList 
+
+
+$LocalAddressList = Get-LAL -ExcelList $ExcelList -GlobalIDGList $GlobalIDGList
 $LocalAddressList | Out-File -FilePath $ExcelPath\log\lal.txt 
 WriteToLog -Text "###########################################################################################"
 WriteToLog -Text "###########################################################  Obtaining Global Address List "
 WriteToLog -Text "###########################################################################################"
 
-
+New-LoginFHH($UserCredential)
 $GlobalAddressList = BuildGAL
 
 $GlobalAddressList | Out-File -FilePath $ExcelPath\log\gal.txt 
@@ -63,17 +90,17 @@ WriteToLog -Text "##############################################################
 WriteToLog -Text "############################################################  Mangaging Global Address List"
 WriteToLog -Text "###########################################################################################"
 
-RemoveFromGAL ($Comparison)
-AddToGAL ($Comparison)
+Remove-FromGAL ($Comparison)
+Add-ToGAL ($Comparison)
 
 
 WriteToLog -Text "###########################################################################################"
 WriteToLog -Text "############################################################  Mangaging Distribution Groups"
 WriteToLog -Text "###########################################################################################"
 
-ManageDistribtionGroups -LAL $LocalAddressList -ExcelList $ExcelList
+Set-DistribtionGroups -LAL $LocalAddressList -ExcelList $ExcelList -GIDGL $GlobalIDGList
 
-CloseFHH
+Close-FHH
 Disconnect-PnPOnline
 $endDTM = (Get-Date)
 
