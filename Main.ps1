@@ -13,9 +13,7 @@ Class Person
 }
 
 
-$ExcelPath = "$(Get-Item $PSScriptRoot)\work"
-$LOG = "$ExcelPath\Log\Log.txt"
-$TestCMDs = "$ExcelPath\Log\CMDs.txt"
+
 
 Function Test-Modules {
     $missing = ""
