@@ -1,4 +1,6 @@
-.vscode/settings.json
+.vscode/*
 work/*
 old/*
 variables.ps1
+doxy/*
+
