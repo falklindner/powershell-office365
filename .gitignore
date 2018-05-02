@@ -1,6 +1,6 @@
-.vscode/*
 work/*
 old/*
 variables.ps1
 doxy/*
 
+.vscode/launch.json

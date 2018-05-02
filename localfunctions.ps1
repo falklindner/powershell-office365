@@ -1,11 +1,10 @@
 Function Get-LAL ($ExcelList, $GlobalIDGList) {
     $LocalAddressList = New-Object System.Collections.Generic.List[Person] 
     # Importing the Contacts from each Excel File in the Base path into a list of instances of type person
-    $i=0
+
     foreach ($ExcelFile in $ExcelList) {
-      ExcelToLAL -ExcelFile $ExcelFile -AddressList $LocalAddressList -GIDGL $GlobalIDGList
+      Convert-ExcelToLAL -ExcelFile $ExcelFile -AddressList $LocalAddressList -GIDGL $GlobalIDGList
       $InternalContacts = $LocalAddressList | Where-Object { $_.Mail -like "*fhh-portal*" }
-      Write-Progress -activity "Importing Local Address List" -status "Imported $i of $($Excellist.Count)" -percentComplete (($i / $Excellist.Count)  * 100)
       WriteToLog -Text "###########  $($ExcelFile.Name) done. $($LocalAddressList.Count) Persons identified ($($InternalContacts.Count) FHH Members)."
       }     
     Return $LocalAddressList
@@ -53,10 +52,10 @@ Function Get-GlobalIDGs  ($ExcelList) {
         # P5 V:Hardware
         # P6 V:Jimdo
     }    
-return $GIDGL
+    return $GIDGL
 }
 
-Function ExcelToLAL ($ExcelFile, $AddressList, $GIDGL){
+Function Convert-ExcelToLAL ($ExcelFile, $AddressList, $GIDGL){
 
     $IDGList = $GIDGL | Where-Object { $_.AG -eq "$($ExcelFile.BaseName)" }
     $Header = PrepareExcelHeader -ExcelFile $ExcelFile -IDGList $IDGList

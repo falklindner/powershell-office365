@@ -77,7 +77,7 @@ WriteToLog -Text "###########################################################  O
 WriteToLog -Text "###########################################################################################"
 
 New-LoginFHH($UserCredential)
-$GlobalAddressList = BuildGAL
+$GlobalAddressList = Get-GAL
 
 $GlobalAddressList | Out-File -FilePath $ExcelPath\log\gal.txt 
 

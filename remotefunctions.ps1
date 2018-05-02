@@ -28,7 +28,7 @@ Function ContactToPerson ($Contact) {
  return $retPerson
 }
 
-Function BuildGAL {
+Function Get-GAL {
     $ContactList = Get-Contact -ResultSize Unlimited | Select-Object LastName,FirstName,WindowsEmailAddress
     $GlobalAddressList = New-Object System.Collections.Generic.List[Person] 
     # Importing the Contacts from Office 365 Server into a list of instances of type person
