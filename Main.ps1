@@ -82,7 +82,7 @@ $GlobalAddressList = Get-GAL
 $GlobalAddressList | Out-File -FilePath $ExcelPath\log\gal.txt 
 
 $Comparison = Compare-Object -ReferenceObject $GlobalAddressList -DifferenceObject $LocalAddressList -IncludeEqual -Property Mail -PassThru
-$Comparison | Select-Object Mail,SideIndicator | Where-Object { $_.SideIndicator -ne "==" } |  Out-File -FilePath $ExcelPath\log\comp.txt
+$Comparison | Select-Object Mail,SideIndicator | Where-Object { $_.SideIndicator -ne "==" } | Where-Object {($_.Mail -notlike "*fhh-portal*")} |  Out-File -FilePath $ExcelPath\log\comp.txt
 
 WriteToLog -Text "###########################################################################################"
 WriteToLog -Text "############################################################  Mangaging Global Address List"

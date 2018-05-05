@@ -1,9 +1,9 @@
 Function Remove-FromGAL ($Comparison) {
     $ToRemove = @($Comparison | Where-Object  {$_.SideIndicator -eq "<="})
     ForEach ($Contact in $ToRemove) {
-        Remove-MailContact -Confirm:$false -Identity $c.WindowsEmailAddress
+        Remove-MailContact -Confirm:$false -Identity $Contact.Mail
         #WriteToCMD -Text "Remove-MailContact -Confirm:$false -Identity $($Contact.Mail)"
-        WriteToLog -Text "$($Contact.Vorname) $($Contact.NachName) ($($Contact.Mail)) was removed from  Global Address List. "
+        WriteToLog -Text "$($Contact.Vorname) $($Contact.Nachname) ($($Contact.Mail)) was removed from  Global Address List. "
     }
     WriteToLog -Text "$($ToRemove.Count) Contacts have been deleted from the Global Address List."
 }
@@ -12,8 +12,8 @@ Function Add-ToGAL ($Comparison) {
     $ToAdd = ($Comparison | Where-Object  {$_.SideIndicator -eq "=>"} | Where-Object {($_.Mail -notlike "*fhh-portal*")})
     Foreach ($Contact in $ToAdd) {
         #WriteToCMD -Text "New-MailContact -Name $($Contact.VorName) $($Contact.NachName) -ExternalEmailAddress $($Contact.Mail) -LastName $($Contact.NachName) -FirstName $($Contact.VorName)"
-        New-MailContact -Name "$($Contact.VorName) $($Contact.NachName)" -ExternalEmailAddress $Contact.Mail -LastName $Contact.NachName -FirstName $Contact.VorName
-        WriteToLog -Text "$($Contact.Vorname) $($Contact.NachName) ($($Contact.Mail)) was added to Global Address List."
+        New-MailContact -Name "$($Contact.Vorname) $($Contact.Nachname)" -ExternalEmailAddress $Contact.Mail -LastName $Contact.Nachname -FirstName $Contact.Vorname
+        WriteToLog -Text "$($Contact.Vorname) $($Contact.Nachname) ($($Contact.Mail)) was added to Global Address List."
 }
     WriteToLog -Text "$($ToAdd.Count) Contacts have been added to the Global Address List."
 }
